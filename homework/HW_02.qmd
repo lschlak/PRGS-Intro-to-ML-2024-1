@@ -29,6 +29,7 @@ __1. Import the NRI data. Ensure that the [FIPS code](https://en.wikipedia.org/w
 
 ```{python}
 print("helloworld")
+print("this is only in the develop branch")
 ```
 
 __2. Subset the NRI data to include only the 5-digit state/county FIPS code and all colums ending with '\_AFREQ' and '\_RISKR'. Each of these columns represents a different hazard type.__
