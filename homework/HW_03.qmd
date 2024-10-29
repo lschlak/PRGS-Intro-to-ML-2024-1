@@ -24,7 +24,10 @@ Your extension should be the one you use for your programming language of choice
 1. Run the '01_clean_data' file to ensure that the merged dataset runs and creates the proper file.
 1. Add and commit the '01_clean_data' file to the repository.
 
+```{python}
 
+print("")
+```
 
 ## Homework - Principal Component Analysis
 
@@ -44,19 +47,139 @@ Here, we are going to use the CDC SVI data to create an alternative index based 
     Conversely, if you have a general missingness pattern where missing observations are scattered throughout the data, imputation is likely the best option._
     a. After dealing with the missing data, perform PCA on the SVI variables.
 
+ ```{python}
+    import pandas as pd
+    merged_data = pd.read_csv("C:\\Users\\lschlake\\Documents\\2024-2025Courses\\PRGS-Intro-to-ML-2024-1\\data\\processed\\merged_data.csv")
+
+    list = ["EP_POV150", "EP_UNEMP", "EP_HBURD", "EP_NOHSDP", "EP_UNINSUR", "EP_AGE65", "EP_AGE17", "EP_DISABL", "EP_SNGPNT", "EP_LIMENG", "EP_MINRTY", "EP_MUNIT", "EP_MOBILE", "EP_CROWD", "EP_NOVEH", "EP_GROUPQ", "EP_NOINT"]
+
+    filtered=pd.DataFrame()
+
+    for x in list:
+        filtered[x]=merged_data[x]
+
+    pd.set_option("display.max_rows", None)
+
+    missing=filtered.isna()
+    missing.sum()
+    missing[missing["EP_UNEMP"]==1].sum()
+   
+```
+An examination of the data reveals 96 missing values in each columns, suggesting there are a handful of rows completely missing from the data. Filtering for rows in which the EP_UNEMP are missing reveals 96 rows in which data is missing in every column. I drop these columns below: 
+
+```{python}
+    pd.set_option("display.max_rows", 15)
+
+    #Drop rows if EP_UNEMP equals 0
+    data = filtered[filtered["EP_UNEMP"].isna()==0]
+
+    #Check how many values are zero
+    data.isna().sum()
+
+```
+
+
+ ```{python}
+    #Principle Component Analysis 
+
     
+    #PCA steps: 
+    #1. Get original data
+    #2. Calculate covariance matrix
+    #3. Sort eigenvector by eigenvalues (to determine vectors of highest explanatory power)
+    #4. Choose N largest engenvalues
+    #5. Project original data onto eigenvectors
+
+
+    #The math underlying PCA, covariance + eigenvals/vecs
+    from sklearn.preprocessing import StandardScaler
+    import numpy as np
+
+    #Scale the data
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(data)
+
+    #Create the covariance matrix
+    cov_matrix =np.cov(scaled,rowvar=True)
+
+    #Get the eigen values, vectors
+    values,vectors=np.linalg.eig(cov_matrix)
+   
+
+```
+
+```{python}
+    #Applying Principle Component Analysis 
+
+    from sklearn.decomposition import PCA 
+    pca_instance = PCA(n_components=15)
+    #applying PCA 
+    decomp = pca_instance.fit_transform(scaled)
+    vectors = pd.DataFrame(decomp)
+```
+
 
 1. Plot the eigenvectors or loadings associated of the first three principal components.
 Make sure that the axis labels correspond to the variable names and not the indices of the variables.
 How would you interpret the first three prinicpal components?
 _Note: you can find the documentation for the SVI variables [here](https://www.atsdr.cdc.gov/placeandhealth/svi/documentation/SVI_documentation_2022.html)._
+
+ ```{python}
+    
+    pd.set_option("display.max_rows", None)
+
+    #Load the principle components into a dataframe, setting the 
+    #column headers from the dataframe as the indices 
+    loadings = pd.DataFrame(pca_instance.components_.T,index=data.columns)
+
+    #Print the first three columns
+    loadings.iloc[:,:3].sort_values(by=0)
+    
+```
+
+
+
+
+
 1. There are several different ways to determine the number of principal components to retain.
 One common method is to retain principal components that explain a certain percentage of the variance in the data.
     a. How many principal components are needed to explain 80% of the variance in the data?
     a. How many principal components are needed to explain 90% of the variance in the data?
+
+ ```{python}
+ 
+    #Returns explained variance per principle component in  
+    #a Dataframe. Because everything is better in a dataframe. 
+    variance_absorbed=pd.DataFrame(pca_instance.explained_variance_ratio_)
+
+    #Outputs the explained variance per PC
+    variance_absorbed.sort_values(by=0, ascending=False)
+
+    #Cumulative sum of the explained variance 
+    variance_absorbed.cumsum()
+
+```
+Approximately 9 principle components are needed to explain 90% of the variance in the data. 
+
 1. An alternative approach is to plot the eigenvalues of the principal components and retain the components that are above the "elbow" in the plot. In other words the eigenvalues that are substantially larger than the rest.
     a. Create a [scree plot](https://en.wikipedia.org/wiki/Scree_plot) of the eigenvalues of the principal components.
     a. How many principal components should be retained based on the scree plot? This video may help: [PCA Scree Plot](https://youtu.be/vFUvNICWVz4?si=6NbyRcLRGT8L1HzI)
+
+```{python}
+    import matplotlib.pyplot as plt
+
+    x=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    variance_absorbed_ratio = pca_instance.explained_variance_ratio_
+
+    plt.figure()
+    plt.title("Scree Plot: PCA")
+    plt.plot(x,variance_absorbed)
+    plt.axvline(x=4,color='r')
+
+```
+The scree plot indicates that after 4 principle components, the explained variation per component begins to significantly decrease (the "elbow" method). Once could argue the true elbow is at 7 principle components. 
+
+
 1. Cross-validation is another method to determine the number of principal components to retain.
 This process requires some linear algebra that is beyond the scope of this course.
 As such, I have written example [code](https://github.com/gabehassler/PRGS-Intro-to-ML-2024/blob/main/examples/pca_cross_validation.jl) in Julia that demonstrates how to perform cross-validation.
@@ -65,3 +188,8 @@ For the purposes of this assignment, the `pca_cv_error` function is a black box 
 _Note: If you use a different programming language, you can use ChatGPT to translate the code to your language of choice._
     a. Compute the cross-validation error for 1 to 17 principal components. If this process is parallelizable, parallelize the code. If setting a random number seed would make this work more reproducible, set a random number seed.
     a. How many principal components should be retained based on the cross-validation error?
+
+ ```{python}
+    print("hello world")
+```
+
