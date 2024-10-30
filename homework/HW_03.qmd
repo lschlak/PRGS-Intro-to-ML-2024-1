@@ -112,7 +112,7 @@ An examination of the data reveals 96 missing values in each columns, suggesting
     #Applying Principle Component Analysis 
 
     from sklearn.decomposition import PCA 
-    pca_instance = PCA(n_components=15)
+    pca_instance = PCA(n_components=10)
     #applying PCA 
     decomp = pca_instance.fit_transform(scaled)
     vectors = pd.DataFrame(decomp)
@@ -130,11 +130,34 @@ _Note: you can find the documentation for the SVI variables [here](https://www.a
 
     #Load the principle components into a dataframe, setting the 
     #column headers from the dataframe as the indices 
-    loadings = pd.DataFrame(pca_instance.components_.T,index=data.columns)
+    loadings = pd.DataFrame(pca_instance.components_.T,index=missing.columns)
 
+    loadings["var"]=loadings.index
     #Print the first three columns
-    loadings.iloc[:,:3].sort_values(by=0)
-    
+    top_three_loading=loadings[[0,1,2,"var"]].sort_values(by=0)
+```
+
+```{python}
+
+plt.title("PC #1")
+plt.bar(loadings['var'],loadings[0])
+plt.xticks(rotation=45)
+
+```
+```{python}
+
+plt.title("PC #2")
+plt.bar(loadings['var'],loadings[1])
+plt.xticks(rotation=45)
+
+
+```
+```{python}
+
+plt.title("PC #3")
+plt.bar(loadings['var'],loadings[2])
+plt.xticks(rotation=45)
+
 ```
 
 
@@ -156,6 +179,7 @@ One common method is to retain principal components that explain a certain perce
     variance_absorbed.cumsum()
 
 ```
+Approximately 6 principle components are needed to explain 80% of the variance in the data. 
 Approximately 9 principle components are needed to explain 90% of the variance in the data. 
 
 1. An alternative approach is to plot the eigenvalues of the principal components and retain the components that are above the "elbow" in the plot. In other words the eigenvalues that are substantially larger than the rest.
@@ -174,7 +198,7 @@ Approximately 9 principle components are needed to explain 90% of the variance i
     plt.axvline(x=4,color='r')
 
 ```
-The scree plot indicates that after 4 principle components, the explained variation per component begins to significantly decrease (the "elbow" method). Once could argue the true elbow is at 7 principle components. 
+The scree plot indicates that after 4 principle components, the explained variation per component begins to significantly decrease (the "elbow" method). Once could argue the true elbow is at 6 principle components. 
 
 
 1. Cross-validation is another method to determine the number of principal components to retain.
