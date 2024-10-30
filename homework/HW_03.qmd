@@ -1,14 +1,10 @@
 ---
 title: "Homework 3"
-format: 
-    html:
-        embed-resources: true
+format: html
 ---
-
 
 __Due Date:__ 2022-10-30 at 8:30 AM PT
 ---
-
 
 __Name:__ Luke Schlake
 
@@ -48,22 +44,22 @@ Here, we are going to use the CDC SVI data to create an alternative index based 
     a. After dealing with the missing data, perform PCA on the SVI variables.
 
  ```{python}
-    import pandas as pd
-    merged_data = pd.read_csv("C:\\Users\\lschlake\\Documents\\2024-2025Courses\\PRGS-Intro-to-ML-2024-1\\data\\processed\\merged_data.csv")
 
-    list = ["EP_POV150", "EP_UNEMP", "EP_HBURD", "EP_NOHSDP", "EP_UNINSUR", "EP_AGE65", "EP_AGE17", "EP_DISABL", "EP_SNGPNT", "EP_LIMENG", "EP_MINRTY", "EP_MUNIT", "EP_MOBILE", "EP_CROWD", "EP_NOVEH", "EP_GROUPQ", "EP_NOINT"]
+import pandas as pd
+merged_data = pd.read_csv("C:\\Users\\lschlake\\Documents\\2024-2025Courses\\PRGS-Intro-to-ML-2024-1\\data\\processed\\merged_data.csv")
 
-    filtered=pd.DataFrame()
+list = ["EP_POV150", "EP_UNEMP", "EP_HBURD", "EP_NOHSDP", "EP_UNINSUR", "EP_AGE65", "EP_AGE17", "EP_DISABL", "EP_SNGPNT", "EP_LIMENG", "EP_MINRTY", "EP_MUNIT", "EP_MOBILE", "EP_CROWD", "EP_NOVEH", "EP_GROUPQ", "EP_NOINT"]
 
-    for x in list:
-        filtered[x]=merged_data[x]
+filtered=pd.DataFrame()
 
-    pd.set_option("display.max_rows", None)
+for x in list:
+    filtered[x]=merged_data[x]
 
-    missing=filtered.isna()
-    missing.sum()
-    missing[missing["EP_UNEMP"]==1].sum()
-   
+pd.set_option("display.max_rows", None)
+
+missing=filtered.isna()
+missing.sum()
+missing[missing["EP_UNEMP"]==1].sum()
 ```
 An examination of the data reveals 96 missing values in each columns, suggesting there are a handful of rows completely missing from the data. Filtering for rows in which the EP_UNEMP are missing reveals 96 rows in which data is missing in every column. I drop these columns below: 
 
@@ -138,7 +134,7 @@ _Note: you can find the documentation for the SVI variables [here](https://www.a
 ```
 
 ```{python}
-
+import matplotlib.pyplot as plt
 plt.title("PC #1")
 plt.bar(loadings['var'],loadings[0])
 plt.xticks(rotation=45)
@@ -157,6 +153,8 @@ plt.xticks(rotation=45)
 plt.title("PC #3")
 plt.bar(loadings['var'],loadings[2])
 plt.xticks(rotation=45)
+
+
 
 ```
 
@@ -296,7 +294,9 @@ print("Optimal number of principal components:", optimal_k)
         #is the number of folds. I'll select 10
 
     from pathos.multiprocessing import ProcessingPool as Pool   
-    pca_cv_error(scaled, k,10)
+
+    with Pool(processes=6) as pool:
+        pca_cv_error(scaled, k,10)
 
 ```
 
